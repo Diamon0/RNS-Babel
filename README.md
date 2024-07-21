@@ -50,6 +50,8 @@ Make a Fork -> ??? -> Run Tests -> Make a merge request explaining what it does,
 
 ---
 ## TODO List
+### EXTREMELY Major
+- [ ] Make the program back-up every file, probably in a folder, before making ANY change
 ### Major
 - [ ] Finish implementing the basic operations
 - [ ] Create a terminal UI (Basically a GUI but on the console)
