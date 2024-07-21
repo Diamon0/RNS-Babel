@@ -12,6 +12,9 @@ rns-babel
 # Test binary, built with `go test -c`
 *.test
 
+# Test files, bring your own from the game folder or something like that
+*.csv
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
