@@ -34,6 +34,7 @@ Profit!
 
 
 ### Testing
+Copy the necessary game files to test it (`Parser/Data/[files] and Parser/Dialog/[files]`)
 Run `make test` in the main folder, feel free to add your own tests
 \
 \
