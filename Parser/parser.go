@@ -358,13 +358,45 @@ func ParseKeyLevelStrings(sheet *[]KeyLevelStrings, records [][]string) error {
 
 // A translation with the format key,language
 type KeyStrings struct {
-	Translations map[string]Translation
+    Key string
+	Strings []Translation
 }
 
-// TODO:
-// Pending implementation
-// (Diamon)
-type DialogueStrings struct{}
+func ParseKeyStrings(sheet *[]KeyStrings, records [][]string) error {
+    langs := make([]string, 0)
+
+    // Populate languages
+    for i := 1; i < len(records[0]); i++ {
+        langs = append(langs, records[0][i])
+    }
+    
+    // Check every row past the first one
+    for row := 1; row < len(records); row++ {
+        // Add empty row if empty (For the purposes of not messing with the file structure)
+        if records[row][0] == "" {
+            emptyKS := &KeyStrings{}
+            *sheet = append(*sheet, *emptyKS)
+            continue
+        }
+        newKS := &KeyStrings{}
+
+        newKS.Key = records[row][0]
+
+        // Add the translations
+        for lang := 0; lang+1 < len(records[row]); lang++ {
+            newTranslation := &Translation{
+                Language: langs[lang],
+                String: records[row][lang+1],
+            }
+
+            newKS.Strings = append(newKS.Strings, *newTranslation)
+        }
+
+        *sheet = append(*sheet, *newKS)
+    }
+
+    return nil
+}
 
 // Struct for NameSheets.
 // No I won't make the Strings variable into a pointer to an array,
@@ -456,11 +488,55 @@ type StringSheet struct {
 	Strings []KeyStrings
 }
 
-// Struct for StringSheetEnum
-// For now, only Strings_Dialog.csv uses it
+func (ss *StringSheet) Parse() error {
+    if ss.File == nil {
+        return errors.New("StringSheet has no File referenced")
+    }
+    
+    records, err := parseFile(ss.File)
+
+    if err = ParseKeyStrings(&ss.Strings, records); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func (ss *StringSheet) Update() error {
+    return errors.New("Not yet implemented")
+}
+
+// Struct for StringSheetEnum.
+// For now, only Strings_Dialog.csv uses it,
+// and it is handled the same as other string sheets
 type StringSheetEnum struct {
 	File    *os.File
 	Strings []KeyStrings
+}
+
+func (sse *StringSheetEnum) Parse() error {
+    if sse.File == nil {
+        return errors.New("StringSheet has no File referenced")
+    }
+    
+    records, err := parseFile(sse.File)
+
+    if err = ParseKeyStrings(&sse.Strings, records); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func (ss *StringSheetEnum) Update() error {
+    return errors.New("Not yet implemented")
+}
+
+type DialogueStrings struct {
+    Type int
+    FlagScript any
+    ExpressionVar0 any
+    Translations []Translation
 }
 
 // TODO:
@@ -468,6 +544,7 @@ type StringSheetEnum struct {
 // (Diamon)
 type DialogueFile struct {
 	File *os.File
+    Strings []DialogueStrings
 }
 
 // Files used to manage language data
@@ -576,6 +653,62 @@ func ParseGameFiles(gamePath string) (LanguageFiles, error) {
 
         // Add the Titles file
         languageFiles.Sheets = append(languageFiles.Sheets, titleSheet)
+    }
+
+    // Open and parse the String files
+    // First do the odd one
+    file, err = os.OpenFile(gamePath+"/Data/Strings.csv", os.O_RDWR, 0644)
+    if err != nil {
+        return languageFiles, err
+    }
+    defer file.Close()
+
+    stringSheet := &StringSheet{
+        File: file,
+    }
+
+    if err = stringSheet.Parse(); err != nil {
+        return languageFiles, err
+    }
+
+    languageFiles.Sheets = append(languageFiles.Sheets, stringSheet)
+
+    // Now do the other ones known
+    for _, name := range KnownStringFiles {
+        file, err = os.OpenFile(gamePath+"/Data/Strings_"+name+".csv", os.O_RDWR, 0644)
+        if err != nil {
+            return languageFiles, err
+        }
+        defer file.Close()
+
+        stringSheet := &StringSheet{
+            File: file,
+        }
+
+        if err = stringSheet.Parse(); err != nil {
+            return languageFiles, err
+        }
+
+        languageFiles.Sheets = append(languageFiles.Sheets, stringSheet)
+    }
+
+    // Same for the StringEnums
+    for _, name := range KnownStringEnumFiles {
+        file, err = os.OpenFile(gamePath+"/Data/Strings_"+name+".csv", os.O_RDWR, 0644)
+        if err != nil {
+            return languageFiles, err
+        }
+        defer file.Close()
+
+        stringSheet := &StringSheet{
+            File: file,
+        }
+
+        if err = stringSheet.Parse(); err != nil {
+            return languageFiles, err
+        }
+
+        languageFiles.Sheets = append(languageFiles.Sheets, stringSheet)
     }
 
 	return languageFiles, nil

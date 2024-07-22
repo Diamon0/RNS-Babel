@@ -57,6 +57,10 @@ func TestParseGameFiles(t *testing.T) {
                 t.Logf("Found Description Sheet: %v", v.File.Name())
             case *TitleSheet:
                 t.Logf("Found Title Sheet: %v", v.File.Name())
+            case *StringSheet:
+                t.Logf("Found String Sheet: %v", v.File.Name())
+            case *StringSheetEnum:
+                t.Logf("Found StringEnum Sheet: %v", v.File.Name())
             default:
                 t.Errorf("Found Sheet of Unknown Type (HOW?): %+v", v)
         }
