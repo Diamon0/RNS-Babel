@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"unicode"
 )
 
 // TODO: Replace for dynamic lookup inside the Data folder,
@@ -17,6 +18,8 @@ var KnownTitleFiles []string = []string{"Character", "Enemy", "NPC"}
 // Don't forget the one without any extra '_x'
 var KnownStringFiles []string = []string{"Art_Description", "Art_Title", "Effect", "Intro", "Item", "Menu", "Music", "Unlock"}
 var KnownStringEnumFiles []string = []string{"Dialog"}
+
+var KnownDialogueFiles []string = []string{"birds", "dragon", "frog", "hearts", "mouse", "other", "shopkeeper", "test", "wolf"}
 
 // Interface for any file where text is changed according to the language.
 type TranslationFile interface {
@@ -506,15 +509,15 @@ func (ss *StringSheet) Update() error {
     return errors.New("Not yet implemented")
 }
 
-// Struct for StringSheetEnum.
+// Struct for StringEnumSheet.
 // For now, only Strings_Dialog.csv uses it,
 // and it is handled the same as other string sheets
-type StringSheetEnum struct {
+type StringEnumSheet struct {
 	File    *os.File
 	Strings []KeyStrings
 }
 
-func (sse *StringSheetEnum) Parse() error {
+func (sse *StringEnumSheet) Parse() error {
     if sse.File == nil {
         return errors.New("StringSheet has no File referenced")
     }
@@ -528,7 +531,7 @@ func (sse *StringSheetEnum) Parse() error {
     return nil
 }
 
-func (ss *StringSheetEnum) Update() error {
+func (ss *StringEnumSheet) Update() error {
     return errors.New("Not yet implemented")
 }
 
@@ -539,22 +542,98 @@ type DialogueStrings struct {
     Translations []Translation
 }
 
-// TODO:
-// Pending Implementation
-// (Diamon)
+func ParseDialogueStrings(sheet *[]DialogueStrings, records [][]string) error {
+    langs := make([]string, 0)
+
+    // Populate languages
+    for i := 3; i < len(records[0]); i++ {
+        langs = append(langs, records[0][i])
+    }
+
+    // Check every row past the first one
+    for row := 1; row < len(records); row++ {
+        // Add empty row if empty
+        if records[row][0] == "" {
+            emptyDS := &DialogueStrings{}
+            *sheet = append(*sheet, *emptyDS)
+            continue
+        }
+
+        newDS := &DialogueStrings{}
+
+        val, err := strconv.Atoi(records[row][0])
+        if err != nil {
+            return err
+        }
+
+        newDS.Type = val
+        if unicode.IsDigit(rune(records[row][1][0])) {
+            val, err = strconv.Atoi(records[row][1])
+            if err != nil {
+                return err
+            }
+
+            newDS.FlagScript = val
+        } else {
+            newDS.FlagScript = records[row][1]
+        }
+        
+        if unicode.IsDigit(rune(records[row][2][0])) {
+            val, err = strconv.Atoi(records[row][2])
+            if err != nil {
+                return err
+            }
+
+            newDS.ExpressionVar0 = val
+        } else {
+            newDS.ExpressionVar0 = records[row][2]
+        }
+
+        for lang := 0; lang+3 < len(records[row]); lang++ {
+            newTranslation := &Translation{
+                Language: langs[lang],
+                String: records[row][lang+3],
+            }
+
+            newDS.Translations = append(newDS.Translations, *newTranslation)
+        }
+
+        *sheet = append(*sheet, *newDS)
+    }
+
+    return nil
+}
+
 type DialogueFile struct {
 	File *os.File
     Strings []DialogueStrings
+}
+
+func (df *DialogueFile) Parse() error {
+    if df.File == nil {
+        return errors.New("DialogueFile has no File referenced")
+    }
+
+    records, err := parseFile(df.File)
+    if err != nil {
+        return err
+    }
+
+    if err = ParseDialogueStrings(&df.Strings, records); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func (df *DialogueFile) Update() error {
+    return errors.New("Not yet implemented")
 }
 
 // Files used to manage language data
 type LanguageFiles struct {
 	Languages LanguageFile
 	Sheets    []TranslationFile
-
-	// TODO:
-	// Pending Implementation
-	// (Diamon)
 	Dialogues []TranslationFile
 }
 

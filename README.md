@@ -56,7 +56,7 @@ Make a Fork -> ??? -> Run Tests -> Make a merge request explaining what it does,
 ### Major
 - [ ] Finish implementing the basic operations
 - [ ] Create a terminal UI (Basically a GUI but on the console)
-- [ ] Add support for Dialogue scripts (Diamon just took a look at it and dreaded)
+- [X] Add support for Dialogue scripts (Diamon just took a look at it and dreaded) (Update: It wasn't as bad after I moved from a structured approach to a by-line approach)
 - [ ] Create a graphical UI
 - [ ] Who knows?
 ### Minor
