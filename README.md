@@ -56,7 +56,7 @@ Make a Fork -> ??? -> Run Tests -> Make a merge request explaining what it does,
 - [ ] Finish implementing the basic operations
 - [ ] Create a terminal UI (Basically a GUI but on the console)
 - [ ] Add support for Dialogue scripts (Diamon just took a look at it and dreaded)
-- [ ] Create an graphical UI
+- [ ] Create a graphical UI
 - [ ] Who knows?
 ### Minor
 - [ ] Add building/compiling to Make
