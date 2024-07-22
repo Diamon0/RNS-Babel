@@ -6,7 +6,7 @@ import (
 )
 
 // Set to true if you want to see the full print of results
-var FullVerbose bool = true
+var FullVerbose bool = false
 
 func TestParseFile(t *testing.T) {
 	t.Log("Testing parseFile...")
@@ -43,7 +43,27 @@ func TestParseGameFiles(t *testing.T) {
 
     if FullVerbose {
         t.Log("Printing parsed game files...")
-        t.Logf("%+v", gameFiles)
+        t.Log("Printing Language file:")
+        t.Log(gameFiles.Languages.Languages)
+        t.Log("Printing Sheet files:")
+    }
+
+    t.Log("Printing sheets:")
+    for _, sheet := range gameFiles.Sheets {
+        switch v := sheet.(type) {
+            case *NameSheet:
+                t.Logf("Found Name Sheet: %v", v.File.Name())
+            case *DescriptionSheet:
+                t.Logf("Found Description Sheet: %v", v.File.Name())
+            case *TitleSheet:
+                t.Logf("Found Title Sheet: %v", v.File.Name())
+            default:
+                t.Errorf("Found Sheet of Unknown Type (HOW?): %+v", v)
+        }
+
+        if FullVerbose {
+            t.Logf("%+v", sheet)
+        }
     }
 
     t.Log("ParseGameFiles Passed!")
