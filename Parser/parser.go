@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"sync"
 	"unicode"
 )
 
@@ -20,6 +21,18 @@ var KnownStringFiles []string = []string{"Art_Description", "Art_Title", "Effect
 var KnownStringEnumFiles []string = []string{"Dialog"}
 
 var KnownDialogueFiles []string = []string{"birds", "dragon", "frog", "hearts", "mouse", "other", "shopkeeper", "test", "wolf"}
+
+// For later use
+type FileType int8
+
+const (
+	TypeName FileType = iota
+	TypeDescription
+	TypeTitle
+	TypeString
+	TypeStringEnum
+	TypeDialogue
+)
 
 // Interface for any file where text is changed according to the language.
 type TranslationFile interface {
@@ -297,9 +310,9 @@ func ParseKeyLevelString(sheet *[]*KeyLevelStrings, record [][]string) error {
             *sheet = append(*sheet, nil)
             continue
         }
-        
+
         for i := 0; i+2 < len(record[row]); i++ {
-            
+
         }
     }
 }
@@ -307,98 +320,98 @@ func ParseKeyLevelString(sheet *[]*KeyLevelStrings, record [][]string) error {
 
 // The individual translation for each key
 type Translation struct {
-    Language string
-    String string
+	Language string
+	String   string
 }
 
 type KeyLevelStrings struct {
-    Key string
-    Level int
-    Strings []Translation
+	Key     string
+	Level   int
+	Strings []Translation
 }
 
 func ParseKeyLevelStrings(sheet *[]KeyLevelStrings, records [][]string) error {
-    langs := make([]string, 0)
+	langs := make([]string, 0)
 
-    // Populate languages
-    for i := 2; i < len(records[0]); i++ {
-        langs = append(langs, records[0][i])
-    }
-    
-    // Check every row past the first one
-    for row := 1; row < len(records); row++ {
-        // Add empty row if empty (For the purposes of not messing with the file structure)
-        if records[row][0] == "" {
-            emptyKLS := &KeyLevelStrings{}
-            *sheet = append(*sheet, *emptyKLS)
-            continue
-        }
+	// Populate languages
+	for i := 2; i < len(records[0]); i++ {
+		langs = append(langs, records[0][i])
+	}
 
-        newKLS := &KeyLevelStrings{}
+	// Check every row past the first one
+	for row := 1; row < len(records); row++ {
+		// Add empty row if empty (For the purposes of not messing with the file structure)
+		if records[row][0] == "" {
+			emptyKLS := &KeyLevelStrings{}
+			*sheet = append(*sheet, *emptyKLS)
+			continue
+		}
 
-        newKLS.Key = records[row][0]
-        val, err := strconv.Atoi(records[row][1])
-        if err != nil {
-            return err
-        }
-        newKLS.Level = val
+		newKLS := &KeyLevelStrings{}
 
-        // Add the translations
-        for lang := 0; lang+2 < len(records[row]); lang++ {
-            newTranslation := &Translation{
-                Language: langs[lang],
-                String: records[row][lang+2],
-            }
-            
-            newKLS.Strings = append(newKLS.Strings, *newTranslation)
-        }
+		newKLS.Key = records[row][0]
+		val, err := strconv.Atoi(records[row][1])
+		if err != nil {
+			return err
+		}
+		newKLS.Level = val
 
-        *sheet = append(*sheet, *newKLS)
-    }
+		// Add the translations
+		for lang := 0; lang+2 < len(records[row]); lang++ {
+			newTranslation := &Translation{
+				Language: langs[lang],
+				String:   records[row][lang+2],
+			}
 
-    return nil
+			newKLS.Strings = append(newKLS.Strings, *newTranslation)
+		}
+
+		*sheet = append(*sheet, *newKLS)
+	}
+
+	return nil
 }
 
 // A translation with the format key,language
 type KeyStrings struct {
-    Key string
+	Key     string
 	Strings []Translation
 }
 
 func ParseKeyStrings(sheet *[]KeyStrings, records [][]string) error {
-    langs := make([]string, 0)
+	langs := make([]string, 0)
 
-    // Populate languages
-    for i := 1; i < len(records[0]); i++ {
-        langs = append(langs, records[0][i])
-    }
-    
-    // Check every row past the first one
-    for row := 1; row < len(records); row++ {
-        // Add empty row if empty (For the purposes of not messing with the file structure)
-        if records[row][0] == "" {
-            emptyKS := &KeyStrings{}
-            *sheet = append(*sheet, *emptyKS)
-            continue
-        }
-        newKS := &KeyStrings{}
+	// Populate languages
+	for i := 1; i < len(records[0]); i++ {
+		langs = append(langs, records[0][i])
+	}
 
-        newKS.Key = records[row][0]
+	// Check every row past the first one
+	for row := 1; row < len(records); row++ {
+		// Add empty row if empty (For the purposes of not messing with the file structure)
+		if records[row][0] == "" {
+			emptyKS := &KeyStrings{}
+			*sheet = append(*sheet, *emptyKS)
+			continue
+		}
+		newKS := &KeyStrings{}
 
-        // Add the translations
-        for lang := 0; lang+1 < len(records[row]); lang++ {
-            newTranslation := &Translation{
-                Language: langs[lang],
-                String: records[row][lang+1],
-            }
+		newKS.Key = records[row][0]
 
-            newKS.Strings = append(newKS.Strings, *newTranslation)
-        }
+		// Add the translations
+		for lang := 0; lang+1 < len(records[row]); lang++ {
+			newTranslation := &Translation{
+				Language: langs[lang],
+				String:   records[row][lang+1],
+			}
 
-        *sheet = append(*sheet, *newKS)
-    }
+			newKS.Strings = append(newKS.Strings, *newTranslation)
+		}
 
-    return nil
+		*sheet = append(*sheet, *newKS)
+	}
+
+	return nil
 }
 
 // Struct for NameSheets.
@@ -420,15 +433,15 @@ func (ns *NameSheet) Parse() error {
 		return err
 	}
 
-    if err = ParseKeyLevelStrings(&ns.Strings, records); err != nil {
-        return err
-    }
+	if err = ParseKeyLevelStrings(&ns.Strings, records); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (ns *NameSheet) Update() error {
-    return errors.New("Not yet implemented")
+	return errors.New("Not yet implemented")
 }
 
 // Struct for DescriptionSheets
@@ -447,15 +460,15 @@ func (ds *DescriptionSheet) Parse() error {
 		return err
 	}
 
-    if err = ParseKeyLevelStrings(&ds.Strings, records); err != nil {
-        return err
-    }
+	if err = ParseKeyLevelStrings(&ds.Strings, records); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (ns *DescriptionSheet) Update() error {
-    return errors.New("Not yet implemented")
+	return errors.New("Not yet implemented")
 }
 
 // Struct for TitleSheets
@@ -474,15 +487,15 @@ func (ts *TitleSheet) Parse() error {
 		return err
 	}
 
-    if err = ParseKeyLevelStrings(&ts.Strings, records); err != nil {
-        return err
-    }
+	if err = ParseKeyLevelStrings(&ts.Strings, records); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (ns *TitleSheet) Update() error {
-    return errors.New("Not yet implemented")
+	return errors.New("Not yet implemented")
 }
 
 // Struct for StringSheets
@@ -492,21 +505,21 @@ type StringSheet struct {
 }
 
 func (ss *StringSheet) Parse() error {
-    if ss.File == nil {
-        return errors.New("StringSheet has no File referenced")
-    }
-    
-    records, err := parseFile(ss.File)
+	if ss.File == nil {
+		return errors.New("StringSheet has no File referenced")
+	}
 
-    if err = ParseKeyStrings(&ss.Strings, records); err != nil {
-        return err
-    }
+	records, err := parseFile(ss.File)
 
-    return nil
+	if err = ParseKeyStrings(&ss.Strings, records); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ss *StringSheet) Update() error {
-    return errors.New("Not yet implemented")
+	return errors.New("Not yet implemented")
 }
 
 // Struct for StringEnumSheet.
@@ -518,116 +531,116 @@ type StringEnumSheet struct {
 }
 
 func (sse *StringEnumSheet) Parse() error {
-    if sse.File == nil {
-        return errors.New("StringSheet has no File referenced")
-    }
-    
-    records, err := parseFile(sse.File)
+	if sse.File == nil {
+		return errors.New("StringSheet has no File referenced")
+	}
 
-    if err = ParseKeyStrings(&sse.Strings, records); err != nil {
-        return err
-    }
+	records, err := parseFile(sse.File)
 
-    return nil
+	if err = ParseKeyStrings(&sse.Strings, records); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ss *StringEnumSheet) Update() error {
-    return errors.New("Not yet implemented")
+	return errors.New("Not yet implemented")
 }
 
 type DialogueStrings struct {
-    Type int
-    FlagScript any
-    ExpressionVar0 any
-    Translations []Translation
+	Type           int
+	FlagScript     any
+	ExpressionVar0 any
+	Translations   []Translation
 }
 
 func ParseDialogueStrings(sheet *[]DialogueStrings, records [][]string) error {
-    langs := make([]string, 0)
+	langs := make([]string, 0)
 
-    // Populate languages
-    for i := 3; i < len(records[0]); i++ {
-        langs = append(langs, records[0][i])
-    }
+	// Populate languages
+	for i := 3; i < len(records[0]); i++ {
+		langs = append(langs, records[0][i])
+	}
 
-    // Check every row past the first one
-    for row := 1; row < len(records); row++ {
-        // Add empty row if empty
-        if records[row][0] == "" {
-            emptyDS := &DialogueStrings{}
-            *sheet = append(*sheet, *emptyDS)
-            continue
-        }
+	// Check every row past the first one
+	for row := 1; row < len(records); row++ {
+		// Add empty row if empty
+		if records[row][0] == "" {
+			emptyDS := &DialogueStrings{}
+			*sheet = append(*sheet, *emptyDS)
+			continue
+		}
 
-        newDS := &DialogueStrings{}
+		newDS := &DialogueStrings{}
 
-        val, err := strconv.Atoi(records[row][0])
-        if err != nil {
-            return err
-        }
+		val, err := strconv.Atoi(records[row][0])
+		if err != nil {
+			return err
+		}
 
-        newDS.Type = val
-        if unicode.IsDigit(rune(records[row][1][0])) {
-            val, err = strconv.Atoi(records[row][1])
-            if err != nil {
-                return err
-            }
+		newDS.Type = val
+		if unicode.IsDigit(rune(records[row][1][0])) {
+			val, err = strconv.Atoi(records[row][1])
+			if err != nil {
+				return err
+			}
 
-            newDS.FlagScript = val
-        } else {
-            newDS.FlagScript = records[row][1]
-        }
-        
-        if unicode.IsDigit(rune(records[row][2][0])) {
-            val, err = strconv.Atoi(records[row][2])
-            if err != nil {
-                return err
-            }
+			newDS.FlagScript = val
+		} else {
+			newDS.FlagScript = records[row][1]
+		}
 
-            newDS.ExpressionVar0 = val
-        } else {
-            newDS.ExpressionVar0 = records[row][2]
-        }
+		if unicode.IsDigit(rune(records[row][2][0])) {
+			val, err = strconv.Atoi(records[row][2])
+			if err != nil {
+				return err
+			}
 
-        for lang := 0; lang+3 < len(records[row]); lang++ {
-            newTranslation := &Translation{
-                Language: langs[lang],
-                String: records[row][lang+3],
-            }
+			newDS.ExpressionVar0 = val
+		} else {
+			newDS.ExpressionVar0 = records[row][2]
+		}
 
-            newDS.Translations = append(newDS.Translations, *newTranslation)
-        }
+		for lang := 0; lang+3 < len(records[row]); lang++ {
+			newTranslation := &Translation{
+				Language: langs[lang],
+				String:   records[row][lang+3],
+			}
 
-        *sheet = append(*sheet, *newDS)
-    }
+			newDS.Translations = append(newDS.Translations, *newTranslation)
+		}
 
-    return nil
+		*sheet = append(*sheet, *newDS)
+	}
+
+	return nil
 }
 
 type DialogueFile struct {
-	File *os.File
-    Strings []DialogueStrings
+	File    *os.File
+	Strings []DialogueStrings
 }
 
 func (df *DialogueFile) Parse() error {
-    if df.File == nil {
-        return errors.New("DialogueFile has no File referenced")
-    }
+	if df.File == nil {
+		return errors.New("DialogueFile has no File referenced")
+	}
 
-    records, err := parseFile(df.File)
-    if err != nil {
-        return err
-    }
+	records, err := parseFile(df.File)
+	if err != nil {
+		return err
+	}
 
-    if err = ParseDialogueStrings(&df.Strings, records); err != nil {
-        return err
-    }
+	if err = ParseDialogueStrings(&df.Strings, records); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func (df *DialogueFile) Update() error {
-    return errors.New("Not yet implemented")
+	return errors.New("Not yet implemented")
 }
 
 // Files used to manage language data
@@ -653,10 +666,106 @@ func parseFile(file *os.File) ([][]string, error) {
 	return records, nil
 }
 
+// Concurrently opens and parses the language files.
+func parseLanguageFileConcurrent(filePath string, fileType FileType, fileCollection *chan *TranslationFile, wg *sync.WaitGroup) {
+	defer wg.Done()
+    defer func() {
+        if r := recover(); r != nil {}
+    }()
+
+	file, err := os.OpenFile(filePath, os.O_RDWR, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	var newLangFile TranslationFile
+
+	switch fileType {
+	case TypeName:
+		newLangFile = &NameSheet{
+			File: file,
+		}
+	case TypeDescription:
+		newLangFile = &DescriptionSheet{
+			File: file,
+		}
+	case TypeTitle:
+		newLangFile = &TitleSheet{
+			File: file,
+		}
+	case TypeString:
+		newLangFile = &StringSheet{
+			File: file,
+		}
+	case TypeStringEnum:
+		newLangFile = &StringEnumSheet{
+			File: file,
+		}
+	case TypeDialogue:
+		newLangFile = &DialogueFile{
+			File: file,
+		}
+	default:
+		panic(errors.New("A goroutine failed to parse file: " + file.Name()))
+	}
+
+	if err = newLangFile.Parse(); err != nil {
+		panic(err)
+	}
+
+	// Add the file to the channel
+	*fileCollection <- &newLangFile
+}
+
+func parseLanguageFile(filePath string, fileType FileType) (*TranslationFile, error) {
+	var newTranslationFile TranslationFile
+    file, err := os.OpenFile(filePath, os.O_RDWR, 0644)
+	if err != nil {
+		return &newTranslationFile, err
+	}
+	defer file.Close()
+
+	switch fileType {
+	case TypeName:
+		newTranslationFile = &NameSheet{
+			File: file,
+		}
+	case TypeDescription:
+		newTranslationFile = &DescriptionSheet{
+			File: file,
+		}
+	case TypeTitle:
+		newTranslationFile = &TitleSheet{
+			File: file,
+		}
+	case TypeString:
+		newTranslationFile = &StringSheet{
+			File: file,
+		}
+	case TypeStringEnum:
+		newTranslationFile = &StringEnumSheet{
+			File: file,
+		}
+	case TypeDialogue:
+		newTranslationFile = &DialogueFile{
+			File: file,
+		}
+	default:
+        return &newTranslationFile, errors.New("Failed to parse file: "+file.Name())
+	}
+
+	if err = newTranslationFile.Parse(); err != nil {
+		return &newTranslationFile, err
+	}
+
+    return &newTranslationFile, nil
+}
+
 func ParseGameFiles(gamePath string) (LanguageFiles, error) {
 	var languageFiles LanguageFiles
 
-    // Open and parse the Languages file
+	// Open and parse the Languages file
 	file, err := os.OpenFile(gamePath+"/Data/LanguageEnable.csv", os.O_RDWR, 0644)
 	if err != nil {
 		return languageFiles, err
@@ -668,127 +777,152 @@ func ParseGameFiles(gamePath string) (LanguageFiles, error) {
 	}
 
 	if err = languageFile.Parse(); err != nil {
-        return languageFiles, err
-    }
+		return languageFiles, err
+	}
 
-    // Add the Languages file
+	// Add the Languages file
 	languageFiles.Languages = *languageFile
 
-    // Open and parse the Name files
-    for _, name := range KnownNameFiles {
-        file, err = os.OpenFile(gamePath+"/Data/Names_"+name+".csv", os.O_RDWR, 0644)
-        if err != nil {
-            return languageFiles, err
+	// Open and parse the Name files
+	for _, name := range KnownNameFiles {
+        nameSheet, err := parseLanguageFile(gamePath+"/Data/Names_"+name+".csv", TypeName)
+		if err != nil {
+			return languageFiles, err
+		}
+
+		// Add the Names file
+		languageFiles.Sheets = append(languageFiles.Sheets, *nameSheet)
+	}
+
+	// Open and parse the Description files
+	for _, name := range KnownDescriptionFiles {
+        descriptionSheet, err := parseLanguageFile(gamePath+"/Data/Descriptions_"+name+".csv", TypeDescription)
+		if err != nil {
+			return languageFiles, err
+		}
+
+		// Add the Descriptions file
+		languageFiles.Sheets = append(languageFiles.Sheets, *descriptionSheet)
+	}
+
+	// Open and parse the Title files
+	for _, name := range KnownTitleFiles {
+        titleSheet, err := parseLanguageFile(gamePath+"/Data/Titles_"+name+".csv", TypeTitle)
+		if err != nil {
+			return languageFiles, err
+		}
+
+		// Add the Titles file
+		languageFiles.Sheets = append(languageFiles.Sheets, *titleSheet)
+	}
+
+	// Open and parse the String files
+	// First do the odd one
+    stringSheet, err := parseLanguageFile(gamePath+"/Data/Strings.csv", TypeString)
+	if err != nil {
+		return languageFiles, err
+	}
+
+	languageFiles.Sheets = append(languageFiles.Sheets, *stringSheet)
+
+	// Now do the other ones known
+	for _, name := range KnownStringFiles {
+		stringSheet, err = parseLanguageFile(gamePath+"/Data/Strings_"+name+".csv", TypeString)
+		if err != nil {
+			return languageFiles, err
+		}
+
+		languageFiles.Sheets = append(languageFiles.Sheets, *stringSheet)
+	}
+
+	// Same for the StringEnums
+	for _, name := range KnownStringEnumFiles {
+        stringEnumSheet, err := parseLanguageFile(gamePath+"/Data/Strings_"+name+".csv", TypeStringEnum)
+		if err != nil {
+			return languageFiles, err
+		}
+
+		languageFiles.Sheets = append(languageFiles.Sheets, *stringEnumSheet)
+	}
+
+	return languageFiles, nil
+}
+
+func ParseGameFilesConcurrent(gamePath string) (LanguageFiles, error) {
+	var languageFiles LanguageFiles
+
+	// Open and parse the Languages file
+	file, err := os.OpenFile(gamePath+"/Data/LanguageEnable.csv", os.O_RDWR, 0644)
+	if err != nil {
+		return languageFiles, err
+	}
+	defer file.Close()
+
+	languageFile := &LanguageFile{
+		File: file,
+	}
+
+	if err = languageFile.Parse(); err != nil {
+		return languageFiles, err
+	}
+
+	// Add the Languages file
+	languageFiles.Languages = *languageFile
+
+	// Create the Wait Group
+	wg := sync.WaitGroup{}
+
+	// Create the Sheets channel
+    totalSheetCount := len(KnownNameFiles) + len(KnownDescriptionFiles) + len(KnownTitleFiles) + len(KnownStringFiles)+1 + len(KnownStringEnumFiles)
+	sheetChan := make(chan *TranslationFile, totalSheetCount)
+    defer close(sheetChan)
+
+	// Open and parse the Name files
+	for _, name := range KnownNameFiles {
+		wg.Add(1)
+		go parseLanguageFileConcurrent(gamePath+"/Data/Names_"+name+".csv", TypeName, &sheetChan, &wg)
+	}
+
+	// Open and parse the Description files
+	for _, name := range KnownDescriptionFiles {
+		wg.Add(1)
+		go parseLanguageFileConcurrent(gamePath+"/Data/Descriptions_"+name+".csv", TypeDescription, &sheetChan, &wg)
+	}
+
+	// Open and parse the Title files
+	for _, name := range KnownTitleFiles {
+		wg.Add(1)
+		go parseLanguageFileConcurrent(gamePath+"/Data/Titles_"+name+".csv", TypeTitle, &sheetChan, &wg)
+	}
+
+	// Open and parse the String files
+	// First do the odd one
+	wg.Add(1)
+	go parseLanguageFileConcurrent(gamePath+"/Data/Strings.csv", TypeString, &sheetChan, &wg)
+
+	// Now do the other ones known
+	for _, name := range KnownStringFiles {
+		wg.Add(1)
+		go parseLanguageFileConcurrent(gamePath+"/Data/Strings_"+name+".csv", TypeString, &sheetChan, &wg)
+	}
+
+	// Same for the StringEnums
+	for _, name := range KnownStringEnumFiles {
+		wg.Add(1)
+		go parseLanguageFileConcurrent(gamePath+"/Data/Strings_"+name+".csv", TypeStringEnum, &sheetChan, &wg)
+	}
+
+    // Wait for the group
+    wg.Wait()
+
+	// Add the sheet channel contents
+    for range totalSheetCount {
+        sheet, ok := <-sheetChan
+        if !ok {
+            break
         }
-        defer file.Close()
-
-        nameSheet := &NameSheet{
-            File: file,
-        }
-        
-        if err = nameSheet.Parse(); err != nil {
-            return languageFiles, err
-        }
-
-        // Add the Names file
-        languageFiles.Sheets = append(languageFiles.Sheets, nameSheet)
-    }
-
-    // Open and parse the Description files
-    for _, name := range KnownDescriptionFiles {
-        file, err = os.OpenFile(gamePath+"/Data/Descriptions_"+name+".csv", os.O_RDWR, 0644)
-        if err != nil {
-            return languageFiles, err
-        }
-        defer file.Close()
-
-        descriptionSheet := &DescriptionSheet{
-            File: file,
-        }
-        
-        if err = descriptionSheet.Parse(); err != nil {
-            return languageFiles, err
-        }
-
-        // Add the Descriptions file
-        languageFiles.Sheets = append(languageFiles.Sheets, descriptionSheet)
-    }
-
-    // Open and parse the Title files
-    for _, name := range KnownTitleFiles {
-        file, err = os.OpenFile(gamePath+"/Data/Titles_"+name+".csv", os.O_RDWR, 0644)
-        if err != nil {
-            return languageFiles, err
-        }
-        defer file.Close()
-
-        titleSheet := &TitleSheet{
-            File: file,
-        }
-        
-        if err = titleSheet.Parse(); err != nil {
-            return languageFiles, err
-        }
-
-        // Add the Titles file
-        languageFiles.Sheets = append(languageFiles.Sheets, titleSheet)
-    }
-
-    // Open and parse the String files
-    // First do the odd one
-    file, err = os.OpenFile(gamePath+"/Data/Strings.csv", os.O_RDWR, 0644)
-    if err != nil {
-        return languageFiles, err
-    }
-    defer file.Close()
-
-    stringSheet := &StringSheet{
-        File: file,
-    }
-
-    if err = stringSheet.Parse(); err != nil {
-        return languageFiles, err
-    }
-
-    languageFiles.Sheets = append(languageFiles.Sheets, stringSheet)
-
-    // Now do the other ones known
-    for _, name := range KnownStringFiles {
-        file, err = os.OpenFile(gamePath+"/Data/Strings_"+name+".csv", os.O_RDWR, 0644)
-        if err != nil {
-            return languageFiles, err
-        }
-        defer file.Close()
-
-        stringSheet := &StringSheet{
-            File: file,
-        }
-
-        if err = stringSheet.Parse(); err != nil {
-            return languageFiles, err
-        }
-
-        languageFiles.Sheets = append(languageFiles.Sheets, stringSheet)
-    }
-
-    // Same for the StringEnums
-    for _, name := range KnownStringEnumFiles {
-        file, err = os.OpenFile(gamePath+"/Data/Strings_"+name+".csv", os.O_RDWR, 0644)
-        if err != nil {
-            return languageFiles, err
-        }
-        defer file.Close()
-
-        stringSheet := &StringSheet{
-            File: file,
-        }
-
-        if err = stringSheet.Parse(); err != nil {
-            return languageFiles, err
-        }
-
-        languageFiles.Sheets = append(languageFiles.Sheets, stringSheet)
-    }
+		languageFiles.Sheets = append(languageFiles.Sheets, *sheet)
+	}
 
 	return languageFiles, nil
 }
