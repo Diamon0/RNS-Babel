@@ -284,40 +284,6 @@ func (lf *LanguageFile) Parse() error {
 	return nil
 }
 
-// Keeping just in case
-//
-// This function was welded together with duck tape and a hammer!
-// Sorry, my sanity is decreasing (Diamon)
-// Also, this is also built on hopes and dreams,
-// as it assumes that levels will be placed in order, instead of "level 3, level 1, level 0, level 2"
-//
-// NEVERMIND I took a second look through the files, some aren't ordered as above,
-// so for the sake of keeping consistency, this will be scrapped and I'll just go on a per-line basis;
-// I would be getting in the way of other tools working after all
-/*
-func ParseKeyLevelString(sheet *[]*KeyLevelStrings, record [][]string) error {
-    langs := make([]string, 0)
-    translations := KeyLevelStrings{}
-
-    for i := 2; i < len(record[0]); i++ {
-        langs = append(langs, record[0][i])
-    }
-
-    // Loop rows, ignoring first one
-    for row := 1; row < len(record); row++ {
-        // Check first value for non-empty
-        if record[row][0] == "" {
-            *sheet = append(*sheet, nil)
-            continue
-        }
-
-        for i := 0; i+2 < len(record[row]); i++ {
-
-        }
-    }
-}
-*/
-
 // The individual translation for each key
 type Translation struct {
 	Language string
