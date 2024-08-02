@@ -1,3 +1,53 @@
+html {
+    width: 100vw;
+    height: 100vh;
+}
 body {
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+}
+
+main {
+    display: grid;
+    width: 100vw;
+    height: 100vh;
+    /*I find the use of template areas incredibly funny*/
+    /*Also, it's a 10x10*/
+    grid-template-areas: 
+        "files files langs langs langs langs langs langs langs langs"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings"
+        "files files strings strings strings strings strings strings strings strings";
+    grid-template-rows: repeat(10, 10vh);
+    grid-template-columns: repeat(10, 10vw);
+}
+
+.menu {
+    border: 3px inset black;
+    border-radius: 5px;
+    margin: 5px;
+    overflow: scroll;
+}
+
+#files {
+    grid-area: files;
+    display: flex;
+    flex-flow: column;
+}
+
+#languages {
+    grid-area: langs;
+    display: flex;
+    flex-flow: row;
+}
+
+#strings {
+    grid-area: strings;
 }
