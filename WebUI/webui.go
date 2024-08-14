@@ -20,7 +20,7 @@ func StartWeb(addr string) error {
     http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(WEBDIR+"static"))))
     http.HandleFunc("GET /", Home)
 
-    log.Println("Now listening on port", addr)
+    log.Println("Now listening on port", "http://"+addr)
     return http.ListenAndServe(addr, nil)
 }
 
