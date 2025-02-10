@@ -1,3 +1,13 @@
+:root {
+    --color-background: dimgray;
+    --color-background-alt: gray;
+    --color-primary: white;
+    --color-selected: orchid;
+    --color-valid: green;
+    --color-warning: yellow;
+    --color-error: red;
+}
+
 html {
     width: 100vw;
     height: 100vh;
@@ -6,6 +16,7 @@ body {
     width: 100vw;
     height: 100vh;
     margin: 0;
+    background: var(--color-background);
 }
 
 main {
@@ -34,6 +45,7 @@ main {
     border-radius: 5px;
     margin: 5px;
     overflow: scroll;
+    background: var(--color-background-alt);
 }
 
 #files {
@@ -42,10 +54,121 @@ main {
     flex-flow: column;
 }
 
+.file {
+	padding: 2px 5px 2px 5px;
+    background: var(--color-primary);
+    cursor: pointer;
+}
+
+.file.selected {
+    outline: solid 3px var(--color-selected);
+    outline-offset: -3px;
+}
+
+.file:hover {
+    background: color-mix(in srgb, var(--color-primary) 85%, black)
+}
+
+.file:active {
+    background: color-mix(in srgb, var(--color-primary) 60%, black);
+}
+
+.file.valid {
+    background: var(--color-valid);
+}
+
+.file.valid:hover {
+    background: color-mix(in srgb, var(--color-valid) 85%, white)
+}
+
+.file.valid:active {
+    background: color-mix(in srgb, var(--color-valid) 85%, black);
+}
+
+.file.warning {
+    background: var(--color-warning);
+}
+
+.file.warning:hover {
+    background: color-mix(in srgb, var(--color-warning) 85%, white)
+}
+
+.file.warning:active {
+    background: color-mix(in srgb, var(--color-warning) 85%, black);
+}
+
+.file.error {
+    background: var(--color-error);
+}
+
+.file.error:hover {
+    background: color-mix(in srgb, var(--color-error) 85%, white)
+}
+
+.file.error:active {
+    background: color-mix(in srgb, var(--color-error) 85%, black);
+}
+
 #languages {
     grid-area: langs;
     display: flex;
     flex-flow: row;
+}
+
+.language {
+	padding: 5px 10px 5px 10px;
+    background: var(--color-primary);
+    cursor: pointer;
+    align-content: center;
+}
+
+.language.selected {
+    outline: solid 5px var(--color-selected);
+    outline-offset: -5px;
+}
+
+.language:hover {
+    background: color-mix(in srgb, var(--color-primary) 85%, black)
+}
+
+.language:active {
+    background: color-mix(in srgb, var(--color-primary) 60%, black)
+}
+
+.language.valid {
+    background: var(--color-valid);
+}
+
+.language.valid:hover {
+    background: color-mix(in srgb, var(--color-valid) 85%, white)
+}
+
+.language.valid:active {
+    background: color-mix(in srgb, var(--color-valid) 85%, black)
+}
+
+.language.warning {
+    background: var(--color-warning);
+}
+
+.language.warning:hover {
+    background: color-mix(in srgb, var(--color-warning) 85%, white)
+}
+
+.language.warning:active {
+    background: color-mix(in srgb, var(--color-warning) 85%, black)
+}
+
+.language.error {
+    background: var(--color-error);
+}
+
+.language.error:hover {
+    background: color-mix(in srgb, var(--color-error) 85%, white)
+}
+
+.language.error:active {
+    background: color-mix(in srgb, var(--color-error) 85%, black)
 }
 
 #strings {

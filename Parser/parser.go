@@ -23,7 +23,7 @@ var KnownStringEnumFiles []string = []string{"Dialog"}
 var KnownDialogueFiles []string = []string{"birds", "dragon", "frog", "hearts", "mouse", "other", "shopkeeper", "test", "wolf"}
 
 // For later use
-type FileType int8
+type FileType uint8
 
 const (
 	TypeName FileType = iota
