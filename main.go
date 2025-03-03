@@ -176,6 +176,7 @@ func drawBox(s tcell.Screen, x1, y1, x2, y2 int, boxStyle, borderStyle, textStyl
 
 func main() {
 	var isServerOn atomic.Bool
+    // TODO: Change this "signaler" into a context with cancel, "make"s more sense (hehe, get it? because make)
 	signaler := make(chan int8)
 	defer close(signaler)
 
